@@ -5,7 +5,6 @@ import io.netty.buffer.ByteBufAllocator;
 
 public interface Packet {
 
-    void write(ByteBuf out);
     ByteBuf createData(ByteBufAllocator alloc);
 
 }

@@ -5,7 +5,6 @@ libs/
 target/
 gen/
 dllibs/
-out/
 
 .externalToolBuilders/
  # Eclipse Files #
