@@ -13,7 +13,7 @@ offering the full feature set of the transport protocol, while providing
 room for extension with any plugins or custom behavior. 
 
 ### Examples
-See the test case [here](./test/network/ycc/raknet/EndToEndTest.java#L144).
+See the test case [here](./test/network/ycc/raknet/EndToEndTest.java#L144). (Simple example coming soon)
 
 ## Features
 * Recylable objects:
