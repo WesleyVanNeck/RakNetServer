@@ -120,22 +120,22 @@ public class EndToEndTest {
 
     @Test
     public void manyBufferTestMocked() throws Throwable {
-        dataTest(1000, 5000, false, false, true);
+        dataTest(500, 5000, false, false, true);
     }
 
     @Test
     public void manyBufferBadClientMocked() throws Throwable {
-        dataTest(1000, 5000, false, false, true);
+        dataTest(500, 5000, false, false, true);
     }
 
     @Test
     public void manyBufferBadServerMocked() throws Throwable {
-        dataTest(1000, 5000, true, true, true);
+        dataTest(500, 5000, true, true, true);
     }
 
     @Test
     public void manyBufferBadBothMocked() throws Throwable {
-        dataTest(2000, 3000, true, true, true);
+        dataTest(500, 3000, true, true, true);
     }
 
     @Test
