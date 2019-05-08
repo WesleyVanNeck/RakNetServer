@@ -47,15 +47,16 @@ public class ReliabilityHandler extends ChannelDuplexHandler {
     @Override
     public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
         super.handlerRemoved(ctx);
-        final Throwable t = new ClosedChannelException();
+        //TODO: this exceptions end up being too regular
+        //final Throwable t = new ClosedChannelException();
         frameQueue.forEach(frame -> {
             if (frame.getPromise() != null) {
-                frame.getPromise().tryFailure(t);
+                //frame.getPromise().tryFailure(t);
             }
             frame.release();
         });
         frameQueue.clear();
-        pendingFrameSets.values().forEach(frameSet -> frameSet.fail(t));
+        //pendingFrameSets.values().forEach(frameSet -> frameSet.fail(t));
         pendingFrameSets.values().forEach(FrameSet::release);
         pendingFrameSets.clear();
     }
