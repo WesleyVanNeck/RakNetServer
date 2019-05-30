@@ -9,21 +9,15 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 
 public class UdpChildChannel extends AbstractChannel {
-    protected final Config config;
-    protected final InetSocketAddress remoteAddress;
     protected final ChannelMetadata metadata = new ChannelMetadata(false);
+    protected final DefaultChannelConfig config = new DefaultChannelConfig(this);
+    protected final InetSocketAddress remoteAddress;
 
     protected volatile boolean open = true;
 
-    protected UdpChildChannel(UdpServerChannel parent, InetSocketAddress remoteAddress) {
+    protected UdpChildChannel(Channel parent, InetSocketAddress remoteAddress) {
         super(parent);
         this.remoteAddress = remoteAddress;
-        config = new Config();
-    }
-
-    @Override
-    public UdpServerChannel parent() {
-        return (UdpServerChannel) super.parent();
     }
 
     protected boolean isCompatible(EventLoop eventloop) {
@@ -68,8 +62,11 @@ public class UdpChildChannel extends AbstractChannel {
         while ((obj = buffer.current()) != null) {
             if (obj instanceof ByteBuf) {
                 final ByteBuf data = ReferenceCountUtil.retain((ByteBuf) obj);
-                parent().write(new DatagramPacket(data, remoteAddress))
-                        .addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE);
+                //keep DatagramPacket alloc in lambda so we can benefit from escape analysis
+                parent().eventLoop().execute(() ->
+                    parent().write(new DatagramPacket(data, remoteAddress))
+                            .addListener(ChannelFutureListener.FIRE_EXCEPTION_ON_FAILURE)
+                );
                 wroteAny = true;
             }
             buffer.remove();
@@ -79,7 +76,7 @@ public class UdpChildChannel extends AbstractChannel {
         }
     }
 
-    public Config config() {
+    public ChannelConfig config() {
         return config;
     }
 
@@ -93,14 +90,5 @@ public class UdpChildChannel extends AbstractChannel {
 
     public ChannelMetadata metadata() {
         return metadata;
-    }
-
-    public class Config extends RakNetConfig {
-        protected Config() {
-            super(UdpChildChannel.this);
-            metrics = parent().config.metrics;
-            serverId = parent().config.serverId;
-            userDataId = parent().config.userDataId;
-        }
     }
 }

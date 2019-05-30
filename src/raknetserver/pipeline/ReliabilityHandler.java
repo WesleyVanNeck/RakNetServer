@@ -20,7 +20,6 @@ import raknetserver.packet.Reliability;
 import raknetserver.packet.Reliability.REntry;
 import raknetserver.packet.Reliability.ACK;
 import raknetserver.packet.Reliability.NACK;
-import raknetserver.udp.UdpChildChannel;
 import raknetserver.utils.Constants;
 import raknetserver.utils.UINT;
 
@@ -110,7 +109,10 @@ public class ReliabilityHandler extends ChannelDuplexHandler {
             updateBackPressure(ctx, false);
         }
         Constants.packetLossCheck(pendingFrameSets.size(), "resend queue");
-        metrics = ((UdpChildChannel) ctx.channel()).config().getMetrics();
+        metrics = ctx.channel().attr(RakNetServer.RN_METRICS).get();
+        if (metrics == null) {
+            metrics = RakNetServer.MetricsLogger.DEFAULT;
+        }
         super.flush(ctx);
     }
 
