@@ -14,6 +14,7 @@ import raknetserver.packet.ConnectionFailed;
 import raknetserver.packet.ConnectionReply2;
 import raknetserver.packet.ConnectionRequest2;
 import raknetserver.packet.Packet;
+import raknetserver.udp.UdpChildChannel;
 
 public class ConnectionHandler extends SimpleChannelInboundHandler<Packet> {
 
@@ -49,6 +50,8 @@ public class ConnectionHandler extends SimpleChannelInboundHandler<Packet> {
 
     protected void handleConnectionRequest2(ChannelHandlerContext ctx, ConnectionRequest2 connectionRequest2) {
         final long nguid = connectionRequest2.getGUID();
+        final UdpChildChannel channel = (UdpChildChannel) ctx.channel();
+        final long serverId = channel.config().getServerId();
         if (!isConnected) {
             isConnected = true;
             guid = nguid;

@@ -1,15 +1,16 @@
 package raknetserver;
 
 import java.net.InetSocketAddress;
-import java.util.function.Supplier;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
 import io.netty.channel.DefaultEventLoopGroup;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import io.netty.util.AttributeKey;
+
 import raknetserver.pipeline.*;
 import raknetserver.udp.UdpChildChannel;
 import raknetserver.udp.UdpServerChannel;
@@ -17,16 +18,17 @@ import raknetserver.udp.UdpChildHandler;
 
 public class RakNetServer {
 
+    //TODO: switch some of these to ChannelOptions
     public static final AttributeKey<Integer> MTU = AttributeKey.valueOf("RN_MTU");
     public static final AttributeKey<Long> RTT = AttributeKey.valueOf("RN_RTT");
-    public static final AttributeKey<Integer> USER_DATA_ID = AttributeKey.valueOf("RN_USER_DATA_ID");
-    public static final AttributeKey<MetricsLogger> RN_METRICS = AttributeKey.valueOf("RN_METRICS");
-    public static final AttributeKey<Supplier<String>> PING_SUPPLIER = AttributeKey.valueOf("RN_PING_SUPPLIER");
+    public static final ChannelOption<Long> SERVER_ID = ChannelOption.valueOf("RN_SERVER_ID");
+    public static final ChannelOption<Integer> USER_DATA_ID = ChannelOption.valueOf("RN_USER_DATA_ID");
+    public static final ChannelOption<MetricsLogger> METRICS = ChannelOption.valueOf("RN_METRICS");
 
     public static ChannelFuture createSimple(InetSocketAddress listen, ChannelInitializer childInit, ChannelInitializer ioInit) {
         ServerBootstrap bootstrap = new ServerBootstrap()
-        .group(UdpServerChannel.NEW_EVENT_GROUP.apply(0), new DefaultEventLoopGroup())
-        .channelFactory(() -> new UdpServerChannel())
+        .group(UdpServerChannel.DEFAULT_CHANNEL_EVENT_GROUP.get(), new DefaultEventLoopGroup())
+        .channelFactory(() -> new UdpServerChannel(UdpServerChannel.DEFAULT_CHANNEL_CLASS))
         .handler(new DefaultIoInitializer(ioInit))
         .childHandler(new DefaultChildInitializer(childInit));
         return bootstrap.bind(listen);
@@ -55,7 +57,6 @@ public class RakNetServer {
         }
 
         protected void initChannel(UdpChildChannel channel) {
-            channel.attr(RakNetServer.RN_METRICS).set(MetricsLogger.DEFAULT);
             channel.pipeline()
                     .addLast("rn-timeout",        new ReadTimeoutHandler(5))
                     .addLast(PacketEncoder.NAME,        new PacketEncoder())
