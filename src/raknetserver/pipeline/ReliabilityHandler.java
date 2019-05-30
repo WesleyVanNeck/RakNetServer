@@ -68,9 +68,8 @@ public class ReliabilityHandler extends ChannelDuplexHandler {
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) {
         if (msg instanceof Frame) {
-            final Frame frame = (Frame) msg;
-            queueFrame(frame);
-            frame.setPromise(promise);
+            queueFrame((Frame) msg);
+            promise.trySuccess(); //TODO: more accurate way to trigger these?
         } else {
             ctx.write(msg, promise);
         }
@@ -140,12 +139,11 @@ public class ReliabilityHandler extends ChannelDuplexHandler {
         for (REntry entry : ack.getEntries()) {
             final int max = UINT.B3.plus(entry.idFinish, 1);
             for (int id = entry.idStart ; id != max ; id = UINT.B3.plus(id, 1)) {
-                final FrameSet frameSet = pendingFrameSets.remove(id);
-                if (frameSet != null) {
-                    ackdBytes += frameSet.getRoughSize();
+                final FrameSet packet = pendingFrameSets.remove(id);
+                if (packet != null) {
+                    ackdBytes += packet.getRoughSize();
                     adjustResendGauge(1);
-                    frameSet.succeed();
-                    frameSet.release();
+                    packet.release();
                 }
                 Constants.packetLossCheck(nIterations++, "ack confirm range");
             }
@@ -187,9 +185,9 @@ public class ReliabilityHandler extends ChannelDuplexHandler {
         //gradual increment or decrement for burst tokens, unless unused
         final boolean burstUnused = pendingFrameSets.size() < burstTokens / 2;
         if (resendGauge > 1 && !burstUnused) {
-            burstTokens += 1;
+            burstTokens += 2;
         } else if (resendGauge < -1 || burstUnused) {
-            burstTokens -= 3;
+            burstTokens -= 2;
         }
         burstTokens = Math.max(Math.min(burstTokens, Constants.MAX_PENDING_FRAME_SETS), 0);
         metrics.measureBurstTokens(burstTokens);
